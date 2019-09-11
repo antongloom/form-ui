@@ -3,8 +3,12 @@
     	<div class="Home-Content">
     		<div class="Home-TitleBlock">
     			<div class="Home-Title">Список пользователей</div>
-    			<div class="Home-Btn">Добавить</div>
+    			<div class="Home-Btn" @click="addUser">Добавить</div>
     		</div>
+				<div class="Home-TitleMessage" v-if="one">Данные успешно добавлены!</div>
+    		<div class="Home-TitleMessage" v-if="one">Данные успешно изменены!</div>
+    		<div class="Home-TitleMessage" v-if="one">Данные успешно удалены!</div>
+    		<div class="Home-TitleMessage Home-TitleMessage_Error" v-if="one">Произошла ошибка!</div>
     		<div class="Home-List">
     			<div class="Home-Item">ID</div>
     			<div class="Home-Item">Имя</div>
@@ -19,17 +23,17 @@
     			<div class="Home-Item">kl@mail.ru</div>
     			<div class="Home-Item">90559543343</div>
     			<div class="Home-Item">
-    				<div class="Home-Btn Home-Btn_Small">Добавить</div>
+    				<div class="Home-Btn Home-Btn_Small" @click="addEdit">Добавить</div>
     			</div>
     			<div class="Home-Item">
-    				<div class="Home-Btn Home-Btn_Small">Удалить</div>
+    				<div class="Home-Btn Home-Btn_Small" @click="Delete">Удалить</div>
     			</div>
     		</div>
     	</div>
-    	<div class="Home-Popup">
+    	<div class="Home-Popup" v-if="showAdd">
     		<div class="Home-User">
     			<div class="Home-UserTitle">Добавить Пользователя</div>
-    			<div class="Home-UserClose">
+    			<div class="Home-UserClose" @click="closeUser">
     				<img src="@/assets/images/close.svg" alt="Img">
     			</div>
 					<form class="Home-UserForm">
@@ -45,8 +49,43 @@
 							<input class="Home-Input" type="text" placeholder="Ведите телефон">
 							<div class="Home-Error">Поле не должно быть пустым</div>
 						</div>
+							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
 					</form>
-					<div class="Home-Btn Home-Btn_Small">Добавить</div>
+    		</div>
+    	</div>
+    	<div class="Home-Popup" v-if="showEdit">
+    		<div class="Home-User">
+    			<div class="Home-UserTitle">Редактировать данные</div>
+    			<div class="Home-UserClose" @click="closeEdit">
+    				<img src="@/assets/images/close.svg" alt="Img">
+    			</div>
+					<form class="Home-UserForm">
+						<div class="Home-UserInput">
+							<input class="Home-Input" type="text" placeholder="Ведите имя">
+							<div class="Home-Error">Поле не должно быть пустым</div>
+						</div>
+						<div class="Home-UserInput">
+							<input class="Home-Input" type="text" placeholder="Ведите email">
+							<div class="Home-Error">Поле не должно быть пустым</div>
+						</div>
+						<div class="Home-UserInput">
+							<input class="Home-Input" type="text" placeholder="Ведите телефон">
+							<div class="Home-Error">Поле не должно быть пустым</div>
+						</div>
+							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
+					</form>
+    		</div>
+    	</div>
+    	<div class="Home-Popup" v-if="showDelete">
+    		<div class="Home-User">
+    			<div class="Home-UserTitle">Удалить данные</div>
+    			<div class="Home-UserClose" @click="closeDelete">
+    				<img src="@/assets/images/close.svg" alt="Img">
+    			</div>
+    			<div class="Home-Delete">
+    				<div class="Home-Btn Home-Btn_Small">Да</div>
+    				<div class="Home-Btn Home-Btn_Small" @click="closeDelete">Нет</div>
+    			</div>
     		</div>
     	</div>
   </div>
@@ -58,6 +97,7 @@
 		max-width 1200px
 		margin 0 auto
 		padding-top 50px
+		position relative
 	&-TitleBlock
 		display flex
 		justify-content space-between
@@ -86,6 +126,7 @@
 			border-radius 3px
 			color #fff
 			text-align center
+			border none
 	&-List
 		display flex
 		justify-content space-around
@@ -117,8 +158,16 @@
 		width 400px
 		background #fff
 		box-sizing border-box
-		padding-bottom 20px
-		position relative
+		padding-bottom 5px
+		border-radius 2px
+		position absolute
+		border-radius 2px
+		top 50%
+		left 50%
+		margin-right -50%
+		transform translate(-50%, -50%)
+		overflow hidden
+		min-height 300px
 	&-UserTitle
 		font-size 18px
 		width 100%
@@ -135,19 +184,69 @@
 			height 15px
 	&-UserForm
 		padding 20px 15px
+		padding-bottom 10px
+		text-align center
+	&-UserInput
+		position relative
 	&-Input
 		width 100%
-		height 30px
+		height 35px
 		box-sizing border-box
 		padding 0px 15px
 		border 1px solid #ddd
 		border-radius 2px
+		margin-bottom 25px
+	&-Error
+		color red
+		font-size 14px
+		position absolute
+		top 37px
+	&-Delete
+		display flex
+		width 245px
+		margin 0 auto
+		padding-top 50px
+	&-TitleMessage
+		padding 7px
+		background #006400
+		position absolute
+		top 107px
+		width 100%
+		color #fff
+		box-sizing border-box
+		&_Error
+			background #DC143C
 
 </style>
 <script>
 
 
 export default {
-  name: 'home'
+  name: 'home',
+  data: () => ({
+  	showAdd: false,
+  	showEdit: false,
+  	showDelete: false
+  }),
+  methods: {
+  	addUser() {
+  		this.showAdd = true
+  	},
+  	closeUser() {
+  		this.showAdd = false
+  	},
+  	addEdit() {
+  		this.showEdit = true
+  	},
+  	closeEdit() {
+  		this.showEdit = false
+  	},
+  	Delete() {
+  		this.showDelete = true
+  	},
+  	closeDelete() {
+  		this.showDelete = false
+  	}
+  }
 }
 </script>
