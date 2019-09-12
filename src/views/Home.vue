@@ -261,6 +261,9 @@ export default {
 	components: {
 		TheMask
 	},
+	mounted() {
+  	this.getAllUsers()
+  },
   methods: {
   	addUser() {
   		this.showAdd = true
@@ -295,6 +298,9 @@ export default {
 			this.phone = ''
 			this.$v.$reset()
 			this.closeUser()
+  	},
+  	getAllUsers() {
+  		console.log('efwef')
   	}
   }
 }
