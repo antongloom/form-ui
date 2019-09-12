@@ -36,18 +36,30 @@
     			<div class="Home-UserClose" @click="closeUser">
     				<img src="@/assets/images/close.svg" alt="Img">
     			</div>
-					<form class="Home-UserForm">
+					<form class="Home-UserForm" @submit.prevent="submitForm">
 						<div class="Home-UserInput">
-							<input class="Home-Input" type="text" placeholder="Ведите имя">
-							<div class="Home-Error">Поле не должно быть пустым</div>
+							<input class="Home-Input" 
+										 type="text" 
+										 placeholder="Ведите имя"
+										 v-model="name">
+							<div class="Home-Error" v-if="$v.name.$dirty && !$v.name.required">Поле не должно быть пустым</div>
 						</div>
 						<div class="Home-UserInput">
-							<input class="Home-Input" type="text" placeholder="Ведите email">
-							<div class="Home-Error">Поле не должно быть пустым</div>
+							<input class="Home-Input" 
+										 type="text" 
+										 placeholder="Ведите email"
+										 v-model="email">
+							<div class="Home-Error" v-if="$v.email.$dirty && !$v.email.required">Поле не должно быть пустым</div>
+							<div class="Home-Error" v-if="$v.email.$dirty && !$v.email.email">Введите корректный Email</div>
 						</div>
 						<div class="Home-UserInput">
-							<input class="Home-Input" type="text" placeholder="Ведите телефон">
-							<div class="Home-Error">Поле не должно быть пустым</div>
+							<input class="Home-Input Home-Input_Phone" 
+										 type="tel" 
+										 placeholder="(555) 555-5555"
+										 v-model="phone"
+										 v-mask="'(###) ###-####'">
+							<div class="Home-Mask">+7</div>
+							<div class="Home-Error" v-if="$v.phone.$dirty && !$v.phone.required">Поле не должно быть пустым</div>
 						</div>
 							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
 					</form>
@@ -69,7 +81,8 @@
 							<div class="Home-Error">Поле не должно быть пустым</div>
 						</div>
 						<div class="Home-UserInput">
-							<input class="Home-Input" type="text" placeholder="Ведите телефон">
+							<input class="Home-Input Home-Input_Phone" type="text" placeholder="(555) 555-5555">
+							<div class="Home-Mask">+7</div>
 							<div class="Home-Error">Поле не должно быть пустым</div>
 						</div>
 							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
@@ -196,6 +209,8 @@
 		border 1px solid #ddd
 		border-radius 2px
 		margin-bottom 25px
+		&_Phone
+			padding-left 30px
 	&-Error
 		color red
 		font-size 14px
@@ -216,18 +231,36 @@
 		box-sizing border-box
 		&_Error
 			background #DC143C
+	&-Mask
+		position absolute
+		top 7px
+		left 12px
+		font-size 14px
 
 </style>
 <script>
-
+import {email, required, minLength} from 'vuelidate/lib/validators'
+import {TheMask} from 'vue-the-mask'
 
 export default {
   name: 'home',
   data: () => ({
   	showAdd: false,
   	showEdit: false,
-  	showDelete: false
+  	showDelete: false,
+  	one: false,
+  	name: '',
+  	email: '',
+  	phone: ''
   }),
+  validations: {
+		name: {required},
+		email: {email, required},
+		phone: {required}
+	},
+	components: {
+		TheMask
+	},
   methods: {
   	addUser() {
   		this.showAdd = true
@@ -246,6 +279,22 @@ export default {
   	},
   	closeDelete() {
   		this.showDelete = false
+  	},
+  	submitForm() {
+  		if(this.$v.$invalid){
+					this.$v.$touch()
+					return
+			}
+			const formData = {
+				name: this.name,
+				email: this.email,
+				phone: this.phone
+			}
+			this.name = ''
+			this.email = ''
+			this.phone = ''
+			this.$v.$reset()
+			this.closeUser()
   	}
   }
 }
