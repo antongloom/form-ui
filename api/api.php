@@ -1,11 +1,12 @@
+<?php header('Access-Control-Allow-Origin: *'); ?>
 <?php
 
 $host = "localhost"; 
 $user = "antongek_form"; 
 $password = "antongloom777"; 
-$dbname = "antongek_form"; 
+$dbusername = "antongek_form"; 
 
-$conn = mysqli_connect($host, $user, $password,$dbname);
+$conn = mysqli_connect($host, $user, $password,$dbusername);
 if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());
 }

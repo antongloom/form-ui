@@ -5,7 +5,7 @@
     			<div class="Home-Title">Список пользователей</div>
     			<div class="Home-Btn" @click="addUser">Добавить</div>
     		</div>
-				<div class="Home-TitleMessage" v-if="one">Данные успешно добавлены!</div>
+				<div class="Home-TitleMessage" v-if="successMessage">Данные успешно добавлены!</div>
     		<div class="Home-TitleMessage" v-if="one">Данные успешно изменены!</div>
     		<div class="Home-TitleMessage" v-if="one">Данные успешно удалены!</div>
     		<div class="Home-TitleMessage Home-TitleMessage_Error" v-if="one">Произошла ошибка!</div>
@@ -17,13 +17,13 @@
     			<div class="Home-Item">Добавить</div>
     			<div class="Home-Item">Удалить</div>
     		</div>
-    		<div class="Home-List Home-List_Info">
-    			<div class="Home-Item">1</div>
-    			<div class="Home-Item">uuu</div>
-    			<div class="Home-Item">kl@mail.ru</div>
-    			<div class="Home-Item">90559543343</div>
+    		<div class="Home-List Home-List_Info" v-for="user in users">
+    			<div class="Home-Item">{{user.id}}</div>
+    			<div class="Home-Item">{{user.username}}</div>
+    			<div class="Home-Item">{{user.email}}</div>
+    			<div class="Home-Item">{{user.mobile}}</div>
     			<div class="Home-Item">
-    				<div class="Home-Btn Home-Btn_Small" @click="addEdit">Добавить</div>
+    				<div class="Home-Btn Home-Btn_Small" @click="addEdit(user)">Добавить</div>
     			</div>
     			<div class="Home-Item">
     				<div class="Home-Btn Home-Btn_Small" @click="Delete">Удалить</div>
@@ -41,8 +41,8 @@
 							<input class="Home-Input" 
 										 type="text" 
 										 placeholder="Ведите имя"
-										 v-model="name">
-							<div class="Home-Error" v-if="$v.name.$dirty && !$v.name.required">Поле не должно быть пустым</div>
+										 v-model="username">
+							<div class="Home-Error" v-if="$v.username.$dirty && !$v.username.required">Поле не должно быть пустым</div>
 						</div>
 						<div class="Home-UserInput">
 							<input class="Home-Input" 
@@ -56,10 +56,10 @@
 							<input class="Home-Input Home-Input_Phone" 
 										 type="tel" 
 										 placeholder="(555) 555-5555"
-										 v-model="phone"
+										 v-model="mobile"
 										 v-mask="'(###) ###-####'">
 							<div class="Home-Mask">+7</div>
-							<div class="Home-Error" v-if="$v.phone.$dirty && !$v.phone.required">Поле не должно быть пустым</div>
+							<div class="Home-Error" v-if="$v.mobile.$dirty && !$v.mobile.required">Поле не должно быть пустым</div>
 						</div>
 							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
 					</form>
@@ -71,19 +71,30 @@
     			<div class="Home-UserClose" @click="closeEdit">
     				<img src="@/assets/images/close.svg" alt="Img">
     			</div>
-					<form class="Home-UserForm">
+					<form class="Home-UserForm" @submit.prevent="submitEdit">
 						<div class="Home-UserInput">
-							<input class="Home-Input" type="text" placeholder="Ведите имя">
-							<div class="Home-Error">Поле не должно быть пустым</div>
+							<input class="Home-Input" 
+										 type="text" 
+										 placeholder="Ведите имя"
+										 v-model="username">
+							<div class="Home-Error" v-if="$v.username.$dirty && !$v.username.required">Поле не должно быть пустым</div>
 						</div>
 						<div class="Home-UserInput">
-							<input class="Home-Input" type="text" placeholder="Ведите email">
-							<div class="Home-Error">Поле не должно быть пустым</div>
+							<input class="Home-Input" 
+										 type="text" 
+										 placeholder="Ведите email"
+										 v-model="email">
+							<div class="Home-Error" v-if="$v.email.$dirty && !$v.email.required">Поле не должно быть пустым</div>
+							<div class="Home-Error" v-if="$v.email.$dirty && !$v.email.email">Введите корректный Email</div>
 						</div>
 						<div class="Home-UserInput">
-							<input class="Home-Input Home-Input_Phone" type="text" placeholder="(555) 555-5555">
+							<input class="Home-Input Home-Input_Phone" 
+										 type="tel" 
+										 placeholder="(555) 555-5555"
+										 v-model="mobile"
+										 v-mask="'(###) ###-####'">
 							<div class="Home-Mask">+7</div>
-							<div class="Home-Error">Поле не должно быть пустым</div>
+							<div class="Home-Error" v-if="$v.mobile.$dirty && !$v.mobile.required">Поле не должно быть пустым</div>
 						</div>
 							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
 					</form>
@@ -239,24 +250,28 @@
 
 </style>
 <script>
+import axios from 'axios'
 import {email, required, minLength} from 'vuelidate/lib/validators'
 import {TheMask} from 'vue-the-mask'
 
 export default {
-  name: 'home',
+  username: 'home',
   data: () => ({
   	showAdd: false,
   	showEdit: false,
   	showDelete: false,
   	one: false,
-  	name: '',
+  	username: '',
   	email: '',
-  	phone: ''
+  	mobile: '',
+  	users: [],
+  	successMessage: false,
+  	clickedUser: []
   }),
   validations: {
-		name: {required},
+		username: {required},
 		email: {email, required},
-		phone: {required}
+		mobile: {required}
 	},
 	components: {
 		TheMask
@@ -271,9 +286,9 @@ export default {
   	closeUser() {
   		this.showAdd = false
   	},
-  	addEdit() {
+  	/*addEdit() {
   		this.showEdit = true
-  	},
+  	},*/
   	closeEdit() {
   		this.showEdit = false
   	},
@@ -283,25 +298,56 @@ export default {
   	closeDelete() {
   		this.showDelete = false
   	},
+  	getAllUsers() {
+  		axios 
+      .get("http://antongek.beget.tech/index.php?action=read")
+      .then(response => {
+      	if(response.data.error) {
+      		 this.errorMessage = response.data.message
+      	} else {
+      		this.users = response.data.users
+      	}
+      })
+  	},
   	submitForm() {
   		if(this.$v.$invalid){
 					this.$v.$touch()
 					return
 			}
-			const formData = {
-				name: this.name,
-				email: this.email,
-				phone: this.phone
-			}
-			this.name = ''
+			const formData = this.toFormData({username: this.username, email: this.email, mobile: this.mobile})
+
+			axios 
+      .post("http://antongek.beget.tech/index.php?action=create", formData)
+      .then(response => {
+      	if(response.data.error) {
+      		 this.errorMessage = response.data.message
+      	} else {
+      		 this.getAllUsers()
+      		 this.successMessage = response.data
+      		 setInterval(()=>{
+      		 	this.successMessage = false
+      		 },2000)
+      	}
+      })
+			
+			this.username = ''
 			this.email = ''
-			this.phone = ''
+			this.mobile = ''
 			this.$v.$reset()
 			this.closeUser()
   	},
-  	getAllUsers() {
-  		console.log('efwef')
-  	}
+  	toFormData(obj) {	
+			let form_data = new FormData()
+		      for ( let key in obj ) {
+		          form_data.append(key, obj[key])
+		      } 
+		      return form_data
+		},
+		addEdit(user) {
+			this.showEdit = true
+			this.clickedUser = {username: this.username, email: this.email, mobile: this.mobile}
+		},
   }
 }
 </script>
+
