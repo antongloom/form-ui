@@ -6,15 +6,15 @@
     			<div class="Home-Btn" @click="addUser">Добавить</div>
     		</div>
 				<div class="Home-TitleMessage" v-if="successMessage">Данные успешно добавлены!</div>
-    		<div class="Home-TitleMessage" v-if="one">Данные успешно изменены!</div>
-    		<div class="Home-TitleMessage" v-if="one">Данные успешно удалены!</div>
-    		<div class="Home-TitleMessage Home-TitleMessage_Error" v-if="one">Произошла ошибка!</div>
+    		<div class="Home-TitleMessage" v-if="successEdit">Данные успешно изменены!</div>
+    		<div class="Home-TitleMessage" v-if="successDelete">Данные успешно удалены!</div>
+    		<div class="Home-TitleMessage Home-TitleMessage_Error" v-if="Error">Произошла ошибка!</div>
     		<div class="Home-List">
     			<div class="Home-Item">ID</div>
     			<div class="Home-Item">Имя</div>
     			<div class="Home-Item">Email</div>
     			<div class="Home-Item">Телефон</div>
-    			<div class="Home-Item">Добавить</div>
+    			<div class="Home-Item">Изменить</div>
     			<div class="Home-Item">Удалить</div>
     		</div>
     		<div class="Home-List Home-List_Info" v-for="user in users">
@@ -23,10 +23,10 @@
     			<div class="Home-Item">{{user.email}}</div>
     			<div class="Home-Item">{{user.mobile}}</div>
     			<div class="Home-Item">
-    				<div class="Home-Btn Home-Btn_Small" @click="addEdit(user)">Добавить</div>
+    				<div class="Home-Btn Home-Btn_Small" @click="addEdit(user)">Изменить</div>
     			</div>
     			<div class="Home-Item">
-    				<div class="Home-Btn Home-Btn_Small" @click="Delete">Удалить</div>
+    				<div class="Home-Btn Home-Btn_Small" @click="Delete(user)">Удалить</div>
     			</div>
     		</div>
     	</div>
@@ -61,7 +61,7 @@
 							<div class="Home-Mask">+7</div>
 							<div class="Home-Error" v-if="$v.mobile.$dirty && !$v.mobile.required">Поле не должно быть пустым</div>
 						</div>
-							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
+							<button type="submit" class="Home-Btn Home-Btn_Small">Добавить</button>
 					</form>
     		</div>
     	</div>
@@ -76,27 +76,23 @@
 							<input class="Home-Input" 
 										 type="text" 
 										 placeholder="Ведите имя"
-										 v-model="username">
-							<div class="Home-Error" v-if="$v.username.$dirty && !$v.username.required">Поле не должно быть пустым</div>
+										 v-model="clickedUser.username">
 						</div>
 						<div class="Home-UserInput">
 							<input class="Home-Input" 
 										 type="text" 
 										 placeholder="Ведите email"
-										 v-model="email">
-							<div class="Home-Error" v-if="$v.email.$dirty && !$v.email.required">Поле не должно быть пустым</div>
-							<div class="Home-Error" v-if="$v.email.$dirty && !$v.email.email">Введите корректный Email</div>
+										 v-model="clickedUser.email">
 						</div>
 						<div class="Home-UserInput">
 							<input class="Home-Input Home-Input_Phone" 
 										 type="tel" 
 										 placeholder="(555) 555-5555"
-										 v-model="mobile"
+										 v-model="clickedUser.mobile"
 										 v-mask="'(###) ###-####'">
 							<div class="Home-Mask">+7</div>
-							<div class="Home-Error" v-if="$v.mobile.$dirty && !$v.mobile.required">Поле не должно быть пустым</div>
 						</div>
-							<button type="sunmit" class="Home-Btn Home-Btn_Small">Добавить</button>
+							<button type="submit" class="Home-Btn Home-Btn_Small">Добавить</button>
 					</form>
     		</div>
     	</div>
@@ -107,7 +103,7 @@
     				<img src="@/assets/images/close.svg" alt="Img">
     			</div>
     			<div class="Home-Delete">
-    				<div class="Home-Btn Home-Btn_Small">Да</div>
+    				<div class="Home-Btn Home-Btn_Small" @click="submitDelete">Да</div>
     				<div class="Home-Btn Home-Btn_Small" @click="closeDelete">Нет</div>
     			</div>
     		</div>
@@ -260,13 +256,15 @@ export default {
   	showAdd: false,
   	showEdit: false,
   	showDelete: false,
-  	one: false,
   	username: '',
   	email: '',
   	mobile: '',
   	users: [],
+  	Error: false,
   	successMessage: false,
-  	clickedUser: []
+		successEdit: false,
+		successDelete: false,
+  	clickedUser: {}
   }),
   validations: {
 		username: {required},
@@ -286,14 +284,8 @@ export default {
   	closeUser() {
   		this.showAdd = false
   	},
-  	/*addEdit() {
-  		this.showEdit = true
-  	},*/
   	closeEdit() {
   		this.showEdit = false
-  	},
-  	Delete() {
-  		this.showDelete = true
   	},
   	closeDelete() {
   		this.showDelete = false
@@ -345,9 +337,52 @@ export default {
 		},
 		addEdit(user) {
 			this.showEdit = true
-			this.clickedUser = {username: this.username, email: this.email, mobile: this.mobile}
+			this.clickedUser = user
+		},
+		submitEdit() {
+
+			const formData = this.toFormData(this.clickedUser)
+
+			axios 
+      .post("http://antongek.beget.tech/index.php?action=update", formData)
+      .then(response => {
+      	if(response.data.error) {
+      		 this.errorMessage = response.data.message
+      	} else {
+      		 this.getAllUsers()
+      		 this.successEdit = response.data
+      		 setInterval(()=>{
+      		 	this.successEdit = false
+      		 },2000)
+      	}
+      })
+			this.closeEdit()
+		},
+		Delete(user) {
+  		this.showDelete = true
+  		this.clickedUser = user
+  	},
+  	submitDelete() {
+
+			const formData = this.toFormData(this.clickedUser)
+
+			axios 
+      .post("http://antongek.beget.tech/index.php?action=delete", formData)
+      .then(response => {
+      	if(response.data.error) {
+      		 this.errorMessage = response.data.message
+      	} else {
+      		 this.getAllUsers()
+      		 this.successDelete = response.data
+      		 setInterval(()=>{
+      		 	this.successDelete = false
+      		 },2000)
+      	}
+      })
+			this.closeDelete()
 		},
   }
+
 }
 </script>
 
